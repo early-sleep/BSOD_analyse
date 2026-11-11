@@ -18,9 +18,8 @@ server is started.
   - `all` / `none` buttons per folder,
   - click a file name to preview it (UTF-8 / UTF-16 / GBK are detected automatically)
   - `.evtx` and `.dmp` are shown greyed out: they are binary and are never sent to the model
-- **Quick selection** - `Core logs` (the small, information-dense set) or `Every text log`
-- **AI analysis** - preset questions or your own, answer rendered with headings, bullets and code
-- **Copy / Download .md** for the answer
+- **AI analysis** - one `Analyze` button; the answer is rendered below it with headings, bullets
+  and code blocks. Select what to send with the checkboxes on the left.
 
 ## AI settings
 
@@ -31,7 +30,7 @@ server is started.
 | Endpoint | any OpenAI-compatible base URL: `https://api.deepseek.com/v1`, `https://api.openai.com/v1`, `http://localhost:11434/v1` for Ollama |
 | API key | stored encrypted with Windows DPAPI for the current user, never written in clear text |
 | Model | e.g. `deepseek-chat`, `gpt-4o-mini`, `qwen2.5:14b` |
-| Characters per file / total | how much text is sent, keeps the request inside the context window |
+| Characters per file / total | default 2,000,000 and 15,000,000; lower them if your model has a small context window |
 
 Only the text you select is sent, and only to the endpoint you typed in. Nothing else leaves the machine.
 

@@ -133,8 +133,8 @@ namespace BsodAnalyzer
         public string Endpoint = "https://api.deepseek.com/v1";
         public string Key = "";
         public string Model = "deepseek-chat";
-        public int Per = 20000;
-        public int Total = 150000;
+        public int Per = 2000000;
+        public int Total = 15000000;
         public string Root = "";
 
         private static string FilePath()

@@ -20,6 +20,8 @@ namespace BsodAnalyzer
         private static readonly Color Dark = Color.FromArgb(31, 56, 100);
         private static readonly Color Accent = Color.FromArgb(46, 83, 149);
         private static readonly Color Bg = Color.FromArgb(244, 246, 250);
+        private static readonly Font UiFont = new Font("Microsoft YaHei UI", 9F);
+        private static readonly Font BodyFont = new Font("Microsoft YaHei UI", 9.5F);
         private static readonly Color Line = Color.FromArgb(227, 231, 238);
 
         private Settings _set;
@@ -39,8 +41,7 @@ namespace BsodAnalyzer
         private Panel _tree;
         private TabControl _tabs;
         private RichTextBox _preview, _answerBox;
-        private TextBox _txtQuestion;
-        private Button _btnAnalyze, _btnCopy, _btnSave;
+        private Button _btnAnalyze;
         private TextBox _sEndpoint, _sKey, _sModel, _sPer, _sTotal;
 
         private static readonly string[] Presets = new string[] {
@@ -50,11 +51,13 @@ namespace BsodAnalyzer
             "Based on what is missing here, what else should be collected to confirm the root cause?"
         };
 
-        public MainForm()
+        public MainForm(string startTab)
         {
             _set = Settings.Load();
             BuildUi();
             LoadPackages();
+            if (string.Equals(startTab, "ai", StringComparison.OrdinalIgnoreCase)) _tabs.SelectedIndex = 1;
+            else if (string.Equals(startTab, "settings", StringComparison.OrdinalIgnoreCase)) _tabs.SelectedIndex = 2;
         }
 
         // ---------------------------------------------------------------- UI
@@ -111,6 +114,7 @@ namespace BsodAnalyzer
             bar.Controls.Add(lr);
 
             _txtRoot = new TextBox();
+            _txtRoot.Font = UiFont;
             _txtRoot.Location = new Point(104, 11);
             _txtRoot.Width = 620;
             _txtRoot.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -134,6 +138,9 @@ namespace BsodAnalyzer
                 scan.Left = bar.Width - scan.Width - 16;
                 open.Left = scan.Left - open.Width - 8;
                 _txtRoot.Width = open.Left - _txtRoot.Left - 12;
+                int top = _txtRoot.Top + (_txtRoot.Height - open.Height) / 2;
+                open.Top = top;
+                scan.Top = top;
             };
             bar.PerformLayout();
 
@@ -151,6 +158,7 @@ namespace BsodAnalyzer
             bar2.Controls.Add(lp);
 
             _cboPkg = new ComboBox();
+            _cboPkg.Font = UiFont;
             _cboPkg.DropDownStyle = ComboBoxStyle.DropDownList;
             _cboPkg.Location = new Point(104, 9);
             _cboPkg.Width = 520;
@@ -227,64 +235,11 @@ namespace BsodAnalyzer
 
             Panel aiTop = new Panel();
             aiTop.Dock = DockStyle.Top;
-            aiTop.Height = 168;
+            aiTop.Height = 48;
 
-            Label l1 = new Label();
-            l1.Text = "1. Which logs?";
-            l1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            l1.ForeColor = Dark;
-            l1.AutoSize = true;
-            l1.Location = new Point(0, 0);
-            aiTop.Controls.Add(l1);
-
-            Button core = Chip("Core logs (recommended)", 0);
-            core.Location = new Point(0, 22);
-            core.Click += delegate { SelectCore(); };
-            aiTop.Controls.Add(core);
-
-            Button all = Chip("Every text log", 0);
-            all.Location = new Point(core.Right + 8, 22);
-            all.Click += delegate { SelectAllText(); };
-            aiTop.Controls.Add(all);
-
-            Button none = Chip("Clear selection", 0);
-            none.Location = new Point(all.Right + 8, 22);
-            none.Click += delegate { _sel.Clear(); RenderTree(); };
-            aiTop.Controls.Add(none);
-
-            Label l2 = new Label();
-            l2.Text = "2. What do you want to know?";
-            l2.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            l2.ForeColor = Dark;
-            l2.AutoSize = true;
-            l2.Location = new Point(0, 56);
-            aiTop.Controls.Add(l2);
-
-            int x = 0;
-            for (int i = 0; i < 4; i++)
-            {
-                int idx = i;
-                string label = new string[] { "Key problems", "Hardware or software?", "Errors with timestamps", "What else to collect?" }[i];
-                Button b = Chip(label, 0);
-                if (x + b.Width > 760) { x = 0; }
-                b.Location = new Point(x, 78);
-                b.Click += delegate { _txtQuestion.Text = Presets[idx]; };
-                aiTop.Controls.Add(b);
-                x = b.Right + 8;
-            }
-
-            _txtQuestion = new TextBox();
-            _txtQuestion.Multiline = true;
-            _txtQuestion.BorderStyle = BorderStyle.FixedSingle;
-            _txtQuestion.Location = new Point(0, 106);
-            _txtQuestion.Size = new Size(700, 24);
-            _txtQuestion.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            _txtQuestion.Height = 24;
-            aiTop.Controls.Add(_txtQuestion);
-
-            _btnAnalyze = MakeButton("Analyze with AI", Accent);
-            _btnAnalyze.Size = new Size(150, 30);
-            _btnAnalyze.Location = new Point(0, 136);
+            _btnAnalyze = MakeButton("Analyze", Accent);
+            _btnAnalyze.Size = new Size(150, 32);
+            _btnAnalyze.Location = new Point(0, 4);
             _btnAnalyze.Click += delegate { RunAnalysis(); };
             aiTop.Controls.Add(_btnAnalyze);
 
@@ -292,36 +247,19 @@ namespace BsodAnalyzer
             _lblStatus.Text = "";
             _lblStatus.AutoSize = true;
             _lblStatus.ForeColor = Color.Gray;
-            _lblStatus.Location = new Point(160, 143);
+            _lblStatus.Font = UiFont;
+            _lblStatus.Location = new Point(162, 12);
             aiTop.Controls.Add(_lblStatus);
-
-            Panel aiBottom = new Panel();
-            aiBottom.Dock = DockStyle.Bottom;
-            aiBottom.Height = 40;
-
-            _btnCopy = MakeButton("Copy", Color.FromArgb(107, 114, 128));
-            _btnCopy.Size = new Size(80, 28);
-            _btnCopy.Enabled = false;
-            _btnCopy.Click += delegate { if (_answer.Length > 0) Clipboard.SetText(_answer); };
-            aiBottom.Controls.Add(_btnCopy);
-
-            _btnSave = MakeButton("Download .md", Color.FromArgb(107, 114, 128));
-            _btnSave.Size = new Size(120, 28);
-            _btnSave.Left = 90;
-            _btnSave.Enabled = false;
-            _btnSave.Click += delegate { SaveAnswer(); };
-            aiBottom.Controls.Add(_btnSave);
 
             _answerBox = new RichTextBox();
             _answerBox.Dock = DockStyle.Fill;
             _answerBox.ReadOnly = true;
             _answerBox.BorderStyle = BorderStyle.FixedSingle;
             _answerBox.BackColor = Color.White;
-            _answerBox.Font = new Font("Segoe UI", 9.5F);
+            _answerBox.Font = BodyFont;
             _answerBox.DetectUrls = false;
 
             ai.Controls.Add(_answerBox);
-            ai.Controls.Add(aiBottom);
             ai.Controls.Add(aiTop);
 
             TabPage st = new TabPage("Settings");
@@ -372,6 +310,7 @@ namespace BsodAnalyzer
             host.Controls.Add(l);
 
             box = new TextBox();
+            box.Font = UiFont;
             box.Text = value;
             box.Location = new Point(0, y + 20);
             box.Width = 520;
@@ -690,29 +629,7 @@ namespace BsodAnalyzer
             _tabs.SelectedIndex = 0;
         }
 
-        private void SelectCore()
-        {
-            string[] keys = { "Collection_Info.txt", "key_events.csv", "app_crash_events.csv",
-                              "power_settings.txt", "power_wake.txt", "disk_health.txt",
-                              "system_summary.txt", "hardware_info.csv", "problem_devices.txt",
-                              "network_config.txt", "wlan_history.html" };
-            foreach (FileItem f in _files)
-            {
-                if (f.Size > 3000000) continue;
-                foreach (string k in keys)
-                    if (string.Equals(f.Name, k, StringComparison.OrdinalIgnoreCase)) { _sel.Add(f.Rel); break; }
-            }
-            RenderTree();
-            _tabs.SelectedIndex = 1;
-        }
 
-        private void SelectAllText()
-        {
-            foreach (FileItem f in _files)
-                if (f.Kind == "text" && f.Size < 3000000) _sel.Add(f.Rel);
-            RenderTree();
-            _tabs.SelectedIndex = 1;
-        }
 
         // ---------------------------------------------------------------- AI
         private void SaveSettings()
@@ -740,8 +657,7 @@ namespace BsodAnalyzer
             string content = BuildContent();
             if (content.Length == 0) { MessageBox.Show(this, "The selected files produced no text."); return; }
 
-            string question = _txtQuestion.Text.Trim();
-            if (question.Length == 0) question = Presets[0];
+            string question = Presets[0];
             string user = "Analyse these Windows laptop logs and answer the question at the end.\r\n\r\n"
                         + content + "\r\n\r\n---\r\nQuestion: " + question;
             string system = "You are a senior Windows platform engineer analysing logs collected from a laptop under test. "
@@ -775,8 +691,6 @@ namespace BsodAnalyzer
                         _answer = answer;
                         _lblStatus.Text = "done (" + answer.Length.ToString("N0") + " chars)";
                         RenderMarkdown(answer);
-                        _btnCopy.Enabled = true;
-                        _btnSave.Enabled = true;
                     }
                 }));
             });
@@ -786,7 +700,7 @@ namespace BsodAnalyzer
 
         private void ShowError(string err)
         {
-            _answerBox.SelectionFont = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+            _answerBox.SelectionFont = new Font("Microsoft YaHei UI", 9.5F, FontStyle.Bold);
             _answerBox.SelectionColor = Color.FromArgb(153, 27, 27);
             _answerBox.AppendText("Analysis failed\r\n\r\n");
             _answerBox.SelectionFont = new Font("Segoe UI", 9.5F, FontStyle.Regular);
@@ -820,16 +734,6 @@ namespace BsodAnalyzer
             return sb.ToString();
         }
 
-        private void SaveAnswer()
-        {
-            using (SaveFileDialog d = new SaveFileDialog())
-            {
-                d.FileName = "ai-analysis.md";
-                d.Filter = "Markdown (*.md)|*.md|Text (*.txt)|*.txt";
-                if (d.ShowDialog(this) == DialogResult.OK)
-                    File.WriteAllText(d.FileName, _answer, new UTF8Encoding(false));
-            }
-        }
 
         // ---------------------------------------------------------------- Markdown
         private void RenderMarkdown(string md)
@@ -852,12 +756,12 @@ namespace BsodAnalyzer
                     AddRun(line + "\n", new Font("Consolas", 9F), Color.FromArgb(51, 65, 85));
                     continue;
                 }
-                if (line.StartsWith("### ")) { AddRun(line.Substring(4) + "\n", new Font("Segoe UI", 10.5F, FontStyle.Bold), Dark); continue; }
-                if (line.StartsWith("## ")) { AddRun(line.Substring(3) + "\n", new Font("Segoe UI", 11.5F, FontStyle.Bold), Dark); continue; }
-                if (line.StartsWith("# ")) { AddRun(line.Substring(2) + "\n", new Font("Segoe UI", 13F, FontStyle.Bold), Dark); continue; }
+                if (line.StartsWith("### ")) { AddRun(line.Substring(4) + "\n", new Font("Microsoft YaHei UI", 10.5F, FontStyle.Bold), Dark); continue; }
+                if (line.StartsWith("## ")) { AddRun(line.Substring(3) + "\n", new Font("Microsoft YaHei UI", 11.5F, FontStyle.Bold), Dark); continue; }
+                if (line.StartsWith("# ")) { AddRun(line.Substring(2) + "\n", new Font("Microsoft YaHei UI", 13F, FontStyle.Bold), Dark); continue; }
                 if (line.TrimStart().StartsWith("- ") || line.TrimStart().StartsWith("* "))
                 {
-                    AddRun("  \u2022  ", new Font("Segoe UI", 9.5F), Accent);
+                    AddRun("  \u2022  ", new Font("Microsoft YaHei UI", 9.5F), Accent);
                     AddInline(line.TrimStart().Substring(2) + "\n");
                     continue;
                 }
@@ -882,23 +786,23 @@ namespace BsodAnalyzer
 
                 if (next < 0)
                 {
-                    AddRun(text.Substring(i), new Font("Segoe UI", 9.5F), Color.FromArgb(31, 41, 55));
+                    AddRun(text.Substring(i), new Font("Microsoft YaHei UI", 9.5F), Color.FromArgb(31, 41, 55));
                     return;
                 }
                 if (next > i)
-                    AddRun(text.Substring(i, next - i), new Font("Segoe UI", 9.5F), Color.FromArgb(31, 41, 55));
+                    AddRun(text.Substring(i, next - i), new Font("Microsoft YaHei UI", 9.5F), Color.FromArgb(31, 41, 55));
 
                 if (bold)
                 {
                     int end = text.IndexOf("**", next + 2, StringComparison.Ordinal);
-                    if (end < 0) { AddRun(text.Substring(next), new Font("Segoe UI", 9.5F), Color.FromArgb(31, 41, 55)); return; }
-                    AddRun(text.Substring(next + 2, end - next - 2), new Font("Segoe UI", 9.5F, FontStyle.Bold), Color.FromArgb(17, 24, 39));
+                    if (end < 0) { AddRun(text.Substring(next), new Font("Microsoft YaHei UI", 9.5F), Color.FromArgb(31, 41, 55)); return; }
+                    AddRun(text.Substring(next + 2, end - next - 2), new Font("Microsoft YaHei UI", 9.5F, FontStyle.Bold), Color.FromArgb(17, 24, 39));
                     i = end + 2;
                 }
                 else
                 {
                     int end = text.IndexOf('`', next + 1);
-                    if (end < 0) { AddRun(text.Substring(next), new Font("Segoe UI", 9.5F), Color.FromArgb(31, 41, 55)); return; }
+                    if (end < 0) { AddRun(text.Substring(next), new Font("Microsoft YaHei UI", 9.5F), Color.FromArgb(31, 41, 55)); return; }
                     AddRun(text.Substring(next + 1, end - next - 1), new Font("Consolas", 9F), Color.FromArgb(51, 65, 85));
                     i = end + 1;
                 }

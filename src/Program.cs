@@ -8,7 +8,7 @@ namespace BsodAnalyzer
 {
     internal static class Program
     {
-        public const string Version = "1.0";
+        public const string Version = "1.1";
 
         [STAThread]
         private static int Main(string[] args)
@@ -16,9 +16,10 @@ namespace BsodAnalyzer
             if (args.Length > 0 && string.Equals(args[0], "--selftest", StringComparison.OrdinalIgnoreCase))
                 return SelfTest(args);
 
+            string tab = args.Length > 0 ? args[0].TrimStart('-', '/').ToLowerInvariant() : "";
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+            Application.Run(new MainForm(tab));
             return 0;
         }
 

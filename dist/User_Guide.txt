@@ -1,4 +1,4 @@
-﻿BSOD Log Analyzer v1.0
+﻿BSOD Log Analyzer v1.1
 ======================================================================
 
 1. What it is
@@ -29,12 +29,22 @@ The counter right of the folder name shows selected/total, e.g. 2/4.
 
 4. Picking what to send
 ----------------------------------------------------------------------
-  Core logs        key_events.csv, power_settings, disk health, hardware
-                   summary ... the small set that answers most questions
-  Every text log   all text files (large packages may hit the character
-                   limit in Settings)
+Tick the files you want on the left. Use the folder buttons:
 
-5. AI settings
+  all    tick every file in that folder
+  none   untick that folder
+
+Only ticked files are sent. For most BSOD questions the useful set is
+key_events.csv, Collection_Info.txt, power_settings.txt, disk_health.txt
+and hardware_info.csv - a few hundred KB in total.
+
+5. Running the analysis
+----------------------------------------------------------------------
+Open the "AI analysis" tab and press Analyze. The answer appears below the
+button. While the request runs the button reads "Analyzing..." and the
+status next to it shows the model and how many characters are being sent.
+
+6. AI settings
 ----------------------------------------------------------------------
 Settings tab:
 
@@ -43,11 +53,12 @@ Settings tab:
              http://localhost:11434/v1        (Ollama, no key)
   API key    stored encrypted for your Windows user (DPAPI)
   Model      deepseek-chat, gpt-4o-mini, qwen2.5:14b ...
-  Chars      per file / total, keeps the request inside the context window
+  Chars      per file (default 2,000,000) and total (15,000,000);
+             lower them if your model rejects the request as too long
 
 Press "Save settings" after editing.
 
-6. Errors you may see
+7. Errors you may see
 ----------------------------------------------------------------------
   API call failed. HTTP 401: ... is invalid
       the key is wrong, expired, or truncated when pasted
@@ -56,7 +67,7 @@ Press "Save settings" after editing.
   API call failed: cannot connect to the remote server
       no network access to the endpoint (proxy / firewall)
 
-7. Limitations
+8. Limitations
 ----------------------------------------------------------------------
 - .evtx and .dmp are binary; use Event Viewer and WinDbg for those
 - files are truncated (default 20,000 characters each)
