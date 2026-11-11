@@ -1,0 +1,63 @@
+﻿BSOD Log Analyzer v1.0
+======================================================================
+
+1. What it is
+----------------------------------------------------------------------
+Desktop tool for reading the packages produced by Laptop Log Collector and
+asking an AI model to analyse the logs you select.
+
+No browser, no local server - everything runs inside this window.
+
+2. Getting started
+----------------------------------------------------------------------
+1) Double-click BsodAnalyzer.exe
+2) Point "Packages root" at the folder that holds your collected packages
+   (default: Desktop\LogCollection). Use Open... to pick it.
+3) Pick a package in the Package list
+4) Open the "AI analysis" tab, choose logs, ask a question, press Analyze
+
+3. Reading logs
+----------------------------------------------------------------------
+The left side lists the package grouped by its 10_.., 20_.., 30_.. folders.
+
+  >   click a folder name to expand / collapse it
+  all / none   select or clear every file in that folder
+  [x] click a file name (or tick the box) to preview it
+  .evtx / .dmp greyed out - binary, never sent to the AI
+
+The counter right of the folder name shows selected/total, e.g. 2/4.
+
+4. Picking what to send
+----------------------------------------------------------------------
+  Core logs        key_events.csv, power_settings, disk health, hardware
+                   summary ... the small set that answers most questions
+  Every text log   all text files (large packages may hit the character
+                   limit in Settings)
+
+5. AI settings
+----------------------------------------------------------------------
+Settings tab:
+
+  Endpoint   https://api.deepseek.com/v1      (DeepSeek)
+             https://api.openai.com/v1        (OpenAI)
+             http://localhost:11434/v1        (Ollama, no key)
+  API key    stored encrypted for your Windows user (DPAPI)
+  Model      deepseek-chat, gpt-4o-mini, qwen2.5:14b ...
+  Chars      per file / total, keeps the request inside the context window
+
+Press "Save settings" after editing.
+
+6. Errors you may see
+----------------------------------------------------------------------
+  API call failed. HTTP 401: ... is invalid
+      the key is wrong, expired, or truncated when pasted
+  API call failed. HTTP 400: The supported API model names are ...
+      the Model field does not match your account
+  API call failed: cannot connect to the remote server
+      no network access to the endpoint (proxy / firewall)
+
+7. Limitations
+----------------------------------------------------------------------
+- .evtx and .dmp are binary; use Event Viewer and WinDbg for those
+- files are truncated (default 20,000 characters each)
+- the AI only sees the files you ticked
