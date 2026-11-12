@@ -18,8 +18,9 @@ server is started.
   - `all` / `none` buttons per folder,
   - click a file name to preview it (UTF-8 / UTF-16 / GBK are detected automatically)
   - `.evtx` and `.dmp` are shown greyed out: they are binary and are never sent to the model
-- **AI analysis** - one `Analyze` button; the answer is rendered below it with headings, bullets
-  and code blocks. Select what to send with the checkboxes on the left.
+- **AI analysis** - `Analyze` sends the ticked files and the model answers **in Chinese**; the answer
+  is rendered below with headings and bullets, and can be copied or exported as a .txt file
+- Select what to send with the checkboxes on the left
 
 ## AI settings
 

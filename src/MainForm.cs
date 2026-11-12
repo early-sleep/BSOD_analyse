@@ -41,15 +41,10 @@ namespace BsodAnalyzer
         private Panel _tree;
         private TabControl _tabs;
         private RichTextBox _preview, _answerBox;
-        private Button _btnAnalyze;
+        private Button _btnAnalyze, _btnCopy, _btnExport;
         private TextBox _sEndpoint, _sKey, _sModel, _sPer, _sTotal;
 
-        private static readonly string[] Presets = new string[] {
-            "Summarise the key problems in these logs. Group them by area (boot, power, driver, disk, network, application) and state how confident you are for each.",
-            "Is this a hardware or a software problem? Explain the evidence you used and what would confirm it.",
-            "List the most important errors and warnings in chronological order, with timestamps and the file they came from.",
-            "Based on what is missing here, what else should be collected to confirm the root cause?"
-        };
+
 
         public MainForm(string startTab)
         {
@@ -243,12 +238,26 @@ namespace BsodAnalyzer
             _btnAnalyze.Click += delegate { RunAnalysis(); };
             aiTop.Controls.Add(_btnAnalyze);
 
+            _btnCopy = MakeButton("Copy", Color.FromArgb(107, 114, 128));
+            _btnCopy.Size = new Size(90, 32);
+            _btnCopy.Location = new Point(160, 4);
+            _btnCopy.Enabled = false;
+            _btnCopy.Click += delegate { CopyAnswer(); };
+            aiTop.Controls.Add(_btnCopy);
+
+            _btnExport = MakeButton("Export .txt", Color.FromArgb(107, 114, 128));
+            _btnExport.Size = new Size(120, 32);
+            _btnExport.Location = new Point(258, 4);
+            _btnExport.Enabled = false;
+            _btnExport.Click += delegate { ExportAnswer(); };
+            aiTop.Controls.Add(_btnExport);
+
             _lblStatus = new Label();
             _lblStatus.Text = "";
             _lblStatus.AutoSize = true;
             _lblStatus.ForeColor = Color.Gray;
             _lblStatus.Font = UiFont;
-            _lblStatus.Location = new Point(162, 12);
+            _lblStatus.Location = new Point(390, 12);
             aiTop.Controls.Add(_lblStatus);
 
             _answerBox = new RichTextBox();
@@ -657,18 +666,21 @@ namespace BsodAnalyzer
             string content = BuildContent();
             if (content.Length == 0) { MessageBox.Show(this, "The selected files produced no text."); return; }
 
-            string question = Presets[0];
+            string question = "请分析这些日志，按领域（启动、电源、驱动、磁盘、网络、应用）归纳主要问题，"
+                            + "并说明每个问题的判断依据和置信度。";
             string user = "Analyse these Windows laptop logs and answer the question at the end.\r\n\r\n"
                         + content + "\r\n\r\n---\r\nQuestion: " + question;
-            string system = "You are a senior Windows platform engineer analysing logs collected from a laptop under test. "
-                          + "Be concrete and cite file names and timestamps. Separate what the logs prove from what you suspect. "
-                          + "Answer in English, using short headings and bullet points.";
+            string system = "你是一名资深的 Windows 平台工程师，正在分析笔记本测试中采集到的日志。"
+                          + "请用中文回答，结论要具体，引用文件名和时间戳，明确区分“日志已证实”和“你的推测”。"
+                          + "使用简短的小标题和要点列表，不要输出与日志无关的客套话。";
 
             _busy = true;
             _btnAnalyze.Enabled = false;
             _btnAnalyze.Text = "Analyzing...";
             _lblStatus.Text = "calling " + _set.Model + " (" + content.Length.ToString("N0") + " chars of logs)";
             _answerBox.Text = "";
+            _btnCopy.Enabled = false;
+            _btnExport.Enabled = false;
 
             Settings snapshot = _set;
             Thread th = new Thread(delegate()
@@ -684,6 +696,8 @@ namespace BsodAnalyzer
                     {
                         _lblStatus.Text = "failed";
                         _answerBox.Text = "";
+            _btnCopy.Enabled = false;
+            _btnExport.Enabled = false;
                         ShowError(err);
                     }
                     else
@@ -691,11 +705,40 @@ namespace BsodAnalyzer
                         _answer = answer;
                         _lblStatus.Text = "done (" + answer.Length.ToString("N0") + " chars)";
                         RenderMarkdown(answer);
+                        _btnCopy.Enabled = true;
+                        _btnExport.Enabled = true;
                     }
                 }));
             });
             th.IsBackground = true;
             th.Start();
+        }
+
+        private void CopyAnswer()
+        {
+            if (string.IsNullOrEmpty(_answer)) return;
+            try { Clipboard.SetText(_answer); _lblStatus.Text = "copied to clipboard"; }
+            catch (Exception ex) { _lblStatus.Text = "copy failed: " + ex.Message; }
+        }
+
+        private void ExportAnswer()
+        {
+            if (string.IsNullOrEmpty(_answer)) return;
+            using (SaveFileDialog d = new SaveFileDialog())
+            {
+                d.FileName = "ai-analysis.txt";
+                d.Filter = "Text file (*.txt)|*.txt|Markdown (*.md)|*.md";
+                if (d.ShowDialog(this) != DialogResult.OK) return;
+                try
+                {
+                    File.WriteAllText(d.FileName, _answer, new UTF8Encoding(true));
+                    _lblStatus.Text = "saved: " + Path.GetFileName(d.FileName);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this, "Cannot save the file: " + ex.Message, "BSOD Log Analyzer");
+                }
+            }
         }
 
         private void ShowError(string err)

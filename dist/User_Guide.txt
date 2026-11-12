@@ -1,4 +1,4 @@
-﻿BSOD Log Analyzer v1.1
+﻿BSOD Log Analyzer v1.2
 ======================================================================
 
 1. What it is
@@ -41,8 +41,16 @@ and hardware_info.csv - a few hundred KB in total.
 5. Running the analysis
 ----------------------------------------------------------------------
 Open the "AI analysis" tab and press Analyze. The answer appears below the
-button. While the request runs the button reads "Analyzing..." and the
-status next to it shows the model and how many characters are being sent.
+buttons and is written in Chinese. While the request runs the button reads
+"Analyzing..." and the status shows the model and how many characters are
+being sent.
+
+  Analyze      send the ticked files to the model
+  Copy         copy the whole answer to the clipboard
+  Export .txt  save the answer as a .txt file (UTF-8 with BOM, opens
+               correctly in Notepad and Excel)
+
+Copy and Export stay greyed out until there is an answer.
 
 6. AI settings
 ----------------------------------------------------------------------
